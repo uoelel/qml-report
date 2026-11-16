@@ -1,6 +1,6 @@
 ---
 title: "QML 2026 Data analysis report"
-author: "GROUP NUMBER"
+author: "7"
 date: last-modified
 format:
   html: default
@@ -14,17 +14,42 @@ format:
 
 ## Background
 
-- *Instructions are given in italics. You should remove all instructions before submitting*.
+```{r}
+#| label: setup
+#| message: false
 
-- *You MUST include all code and code output in this report. This is a data analysis report, not an essay or journal article.*
+library(tidyverse)
+theme_set(theme_light())
+library(brms)
+library(bayesplot)
+library(posterior)
+library(ggdist)
+library(tidybayes)
+```
 
-*Write a brief literature background for your study. Explicitly state your Research Questions and, if available, your Research Hypotheses, in the dedicated section below.*
+This document reports a re-analysis of the data in @martin2020. The original study investigated the hypothesis that humans are biased towards considering sequences that differ at the end as more similar than sequences that differ at the beginning. This hypothesis has been linked to the typological preference for suffixation over prefixation in morphology across the languages of the world. The study assessed the preference for post-changed sequences vs pre-changed sequences in speakers of English (Indo-European, a suffixing language) and of Kîîtharaka (Bantu, a prefixing language).
+
+The study used two types of stimuli: sequences of syllables and sequences of visual shapes. The inclusion of both stimulus types was motivated by the distinction between domain-general perceptual biases and biases arising from language experience. If the tendency to attend more to sequence beginnings reflects a general property of human perception, it should be observed across both linguistic and non-linguistic stimuli. Conversely, if the preference is shaped by experience with the structure of one's native language, it may reflect language-specific learning that can subsequently generalise to other domains. Accordingly, the comparison between syllable and shape stimuli allowed the authors to investigate whether the preference for post-changed sequences extends beyond linguistic material.
+
+Participants were presented with a target sequence followed by two comparison sequences: a pre-changed sequence, which differed from the target in its initial element, and a post-changed sequence, which differed in its final element. Their task was to indicate which of the two comparison sequences was more similar to the target. This procedure was repeated using both syllable and shape sequences.
 
 ### Research Questions/Hypotheses
 
+If there is a strong cognitive preference for post-changed sequences, then we should observe such preference independent of linguistic experience (suffixing vs prefixing language) and stimulus type (shape vs syllables). Based on these premises, we will assess the following hypotheses:
+
+- H1: English and Kîîtharaka speakers alike prefer post-changed sequences over pre-changed sequences.
+- H2: Condition (shape vs syllables) doesn't elicit a different preference in both languages.
+
+It should be noted that H2 is briefly mentioned in the original study in the Results section but as far as we can tell it is not addressed in depth in the previous sections.
+
 ## Methods
 
-*Briefly report the methods of the study (participants, materials, procedure, statistical analysis...). Note that when discussing the statistical analysis you should clearly state how the analysis results will be used to assess the RQs/RHs (be as specific and precise as you can). Include an Open Research/Data availability statement in the dedicated section below.*
+Since we are re-analysing pre-existing data, we focus on the statistical analysis (see Background section for a summary of the procedure and materials of the original study). To address the research hypotheses, we will fit a Bayesian regression model to the response (pre-changed vs post-changed) as a function of language in interaction with condition (shape vs syllables).
+
+The critical quantities we will use to address the RHs are:
+
+- H1. Difference in post-changed preference between English and Kîîtharaka (averaged across conditions).
+- H2. Difference in post-changed preference between syllables and shape condition (separate for each language separately).
 
 ### Open Research statement
 
@@ -42,22 +67,281 @@ The Compendium is structured thus: ...
 *Read the data here. If the data needs processing, like mutating columns or creating new ones, briefly explain why processing is needed and what you did*.
 *Include a description of each of the relevant columns in the data.*
 
+The original data is split into two different files, one per language, so we bind them into a single tibble. We also select only the critical trials (i.e. the "post-pre" trials).
+
 ```{r}
 #| label: read-data
 
-# Example code: delete
-1 + 1
+suff_pref_en <- read_csv("data/data_anonymized/English_anon.csv") |>
+  mutate(language = "English")
+suff_pref_ki <- read_csv("data/data_anonymized/Kiitharaka_anon.csv") |>
+  mutate(language = "Kiitharaka")
+
+suff_pref <- bind_rows(suff_pref_en, suff_pref_ki) |> 
+  filter(trial_type == "post-pre")
 
 ```
 
+@tbl-data shows a preview of the data. Post-changed items were coded as `1` in the accuracy column.
+
+```{r}
+#| label: tbl-data
+#| tbl-cap: "Preview of the data"
+
+suff_pref |> 
+  select(subjID, language, condition, target, accuracy)
+```
+
+We check `accuracy` is correctly coded with `0` and `1`.
+
+```{r}
+#| label: acc-check
+
+unique(suff_pref$accuracy)
+```
+
+We create a new column called `pre_post` with `pre` for a pre-changed response and `post` for a post-changed response.
+
+```{r}
+#| label: pre-post
+
+suff_pref <- suff_pref |> 
+  mutate(
+    pre_post = ifelse(accuracy == 0, "pre", "post"),
+    pre_post = factor(pre_post, levels = c("pre", "post"))
+  )
+
+table(suff_pref$pre_post)
+```
+
+Now `condition` has `shapes` for both English and Kîîtharaka, but the language condition was coded as `syllables` in English and `words` in Kîîtharaka, so we change `words` to `syllables`.
+
+```{r}
+#| label: cond
+
+suff_pref <- suff_pref |> 
+  mutate(
+    condition = ifelse(condition == "words", "syllables", condition)
+  )
+
+table(suff_pref$condition, suff_pref$language)
+```
+
+
 ### Descriptive statistics
 
-*Calculate and report appropriate summary measures for relevant variables in the data. Create relevant plots: for each, include in the main text a description of the plot (type, axes, colours used and so on) and a description of relevant patterns.*
+```{r}
+#| label: subjects
+
+suff_pref |> 
+  distinct(subjID, language) |>
+  count(language)
+```
+
+```{r}
+#| label: trials
+
+suff_pref |> 
+  count(language)
+```
+
+```{r}
+#| label: trials-acc
+
+suff_pref |> 
+  count(language, pre_post) |> 
+  group_by(language) |> 
+  mutate(
+    tot = sum(n),
+    prop = round(n / tot, 2)
+  )
+```
+
+```{r}
+#| label: trials-acc-cond
+
+suff_pref |> 
+  count(language, condition, pre_post) |> 
+  group_by(language, condition) |> 
+  mutate(
+    tot = sum(n),
+    prop = round(n / tot, 2)
+  ) |> 
+  filter(pre_post == "post") |> 
+  mutate(
+    value = paste0(n, "/", tot, " (", prop, ")")
+  ) |> 
+  select(language, condition, value) |> 
+  pivot_wider(names_from = condition, values_from = value)
+```
+
+```{r}
+#| label: fig-acc
+#| fig-cap: "Post-changed preference by language"
+
+suff_pref |> 
+  ggplot(aes(language, fill = pre_post)) +
+  geom_bar(position = "fill") +
+  labs(
+    x = "Language", y = "Proportion", fill = "Response"
+  ) +
+  scale_fill_viridis_d()
+```
+
+```{r}
+#| label: fig-acc-cond
+#| fig-cap: "Post-changed preference by language and condition"
+
+suff_pref |> 
+  ggplot(aes(condition, fill = pre_post)) +
+  geom_bar(position = "fill") +
+  labs(
+    x = "Condition", y = "Proportion", fill = "Response"
+  ) +
+  scale_fill_viridis_d() +
+  facet_grid(cols = vars(language))
+```
+
+
+```{r}
+#| label: fig-acc-subj
+
+subj_mean <- suff_pref |> 
+  group_by(subjID, language) |> 
+  summarise(
+    mean = mean(accuracy),
+    .groups = "drop"
+  )
+
+suff_pref |> 
+  ggplot(aes(language, accuracy)) +
+  geom_jitter(
+    data = subj_mean,
+    aes(y = mean),
+    alpha = 0.25,
+    position = position_jitter(width = 0.1, height = 0, seed = 3457),
+  ) +
+  stat_summary(
+    aes(colour = language),
+    fun.data = "mean_cl_boot",
+    size = 0.5
+  ) +
+  labs(
+    x = "Language", y = "Post-changed proportion"
+  ) +
+  theme(legend.position = "none")
+```
+
 
 ## Regression modelling
 
 *Write an explanation of the regression model(s) you will run to answer the chosen research question. Fit the model and get a model summary and relevant model plots. Report the results of the model.*
 
+```{r}
+#| label: post-bm
+
+post_bm <- brm(
+  pre_post ~ condition * language,
+  data = suff_pref,
+  family = bernoulli,
+  cores = 4,
+  seed = 15243,
+  file = "data/cache/post_bm"
+)
+```
+
+```{r}
+#| label: post-summary
+
+summary(post_bm, prob = 0.8)
+```
+
+```{r}
+#| label: post-pp
+
+pp_check(post_bm, ndraws = 10)
+```
+
+```{r}
+#| label: post-trace
+
+mcmc_trace(post_bm, regex_pars = "^b_")
+```
+
+
+```{r}
+#| label: post-draws
+
+post_draws <- as_draws_df(post_bm)
+
+post_draws_long <- post_draws |> 
+  select(b_Intercept:`b_conditionsyllables:languageKiitharaka`) |> 
+  pivot_longer(everything(), names_to = "coef")
+```
+
+```{r}
+#| label: post-coef
+
+post_draws_long |> 
+  ggplot(aes(value, coef)) +
+  stat_halfeye()
+```
+
+```{r}
+#| label: post-pred
+
+grid <- expand_grid(
+  condition = unique(suff_pref$condition),
+  language = unique(suff_pref$language)
+)
+
+post_epred <- epred_draws(post_bm, grid)
+post_linpred <- linpred_draws(post_bm, grid)
+```
+
+```{r}
+post_epred |> 
+  ggplot(aes(.epred, condition, fill = language)) +
+  stat_halfeye()
+```
+
+```{r}
+post_epred_wide <- post_epred |>
+  unite("lang_cond", language, condition) |> 
+  ungroup() |> 
+  select(-.row) |> 
+  pivot_wider(names_from = lang_cond, values_from = .epred)
+```
+
+```{r}
+post_linpred_wide <- post_linpred |>
+  unite("lang_cond", language, condition) |> 
+  ungroup() |> 
+  select(-.row) |> 
+  pivot_wider(names_from = lang_cond, values_from = .linpred) |> 
+  mutate(
+    E_mean = (English_shapes + English_syllables) / 2,
+    K_mean = (Kiitharaka_shapes + Kiitharaka_syllables) / 2,
+    E_p = plogis(E_mean),
+    K_p = 1 - plogis(K_mean),
+    E_K_p = E_p - K_p
+  )
+```
+
+```{r}
+post_linpred_wide |> 
+  ggplot(aes(E_K_p * 100)) +
+  stat_halfeye()
+```
+
+```{r}
+quantile2(post_linpred_wide$E_K_p * 100, probs = c(0.1, 0.9)) |> round()
+```
+
+
 ## Discussion
 
 *Write a brief discussion of the your model results in light of the research question.*
+
+## References
+
