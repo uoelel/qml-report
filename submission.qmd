@@ -130,6 +130,8 @@ table(suff_pref$condition, suff_pref$language)
 
 ### Descriptive statistics
 
+Let's get the number of participants per language.
+
 ```{r}
 #| label: subjects
 
@@ -138,12 +140,17 @@ suff_pref |>
   count(language)
 ```
 
+And the number of tirals per language.
+
+
 ```{r}
 #| label: trials
 
 suff_pref |> 
   count(language)
 ```
+
+In the following code, we calculate the proportion of pre-changed responses and post-changed responses within each language.
 
 ```{r}
 #| label: trials-acc
@@ -157,8 +164,11 @@ suff_pref |>
   )
 ```
 
+@tbl-trials-acc-cond shows the number of post-changed responses (out of the total responses for that cell) and the corresponding proportion, for each language and condition. The raw proportion indicate a preference for post-changed responses in English and a preference for pre-changed responses in Kîîtharaka.
+
 ```{r}
-#| label: trials-acc-cond
+#| label: tbl-trials-acc-cond
+#| tbl-cap: "Number of post-change responses out of cell total and proportion (between parentheses) by language and condition."
 
 suff_pref |> 
   count(language, condition, pre_post) |> 
@@ -172,8 +182,11 @@ suff_pref |>
     value = paste0(n, "/", tot, " (", prop, ")")
   ) |> 
   select(language, condition, value) |> 
-  pivot_wider(names_from = condition, values_from = value)
+  pivot_wider(names_from = condition, values_from = value) |> 
+  knitr::kable()
 ```
+
+@fig-acc illustrates the proportion of responses (pre- or post-changed) in the two languages as a stacked bar chart. The *x*-axis indicates the language, while the *y*-axis the proportion of responses. The fill indicate pre- (purple) and post-changed (yellow) responses.
 
 ```{r}
 #| label: fig-acc
@@ -187,6 +200,8 @@ suff_pref |>
   ) +
   scale_fill_viridis_d()
 ```
+
+@fig-acc-cond is like @fig-acc but it splits the data by language and condition. The proportions within language are very similar across condition, as suggested by the summary measures above.
 
 ```{r}
 #| label: fig-acc-cond
@@ -202,9 +217,11 @@ suff_pref |>
   facet_grid(cols = vars(language))
 ```
 
+@fig-acc-subj is a scatter plot of by-participant proportions of post-changed responses (each grey dot represents one participant), split by language. In colour, the overall proportion of post-changed responses across all participants with 95% bootstrapped CIs.
 
 ```{r}
 #| label: fig-acc-subj
+#| fig-cap: "Proportion of post-changed responses by language and participant (grey dots) and overall proportion with 95% bootstrapped CIs by language."
 
 subj_mean <- suff_pref |> 
   group_by(subjID, language) |> 
@@ -232,6 +249,7 @@ suff_pref |>
   theme(legend.position = "none")
 ```
 
+There is a certain degree of variability between participants in both languages. Most English participants have a proportion of post-changed responses above 50%, although a few fall below 50% with three as low as 0%. In contrast, most Kîîtharaka participants are below 50%, with some above it.
 
 ## Regression modelling
 
