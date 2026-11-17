@@ -253,7 +253,7 @@ There is a certain degree of variability between participants in both languages.
 
 ## Regression modelling
 
-*Write an explanation of the regression model(s) you will run to answer the chosen research question. Fit the model and get a model summary and relevant model plots. Report the results of the model.*
+We will fit a Bayesian regression model with brms [@burkner2017] in R [@rcoreteam2026]. The outcome is the pre vs post response (with post set as the second level), modelled with a Bernoulli family. As predictors, we include condition (shapes vs syllables) and language (English vs Kîîtharaka), and an interaction between the two. Both predictors are categorical and coded using the default treatment contrasts with the reference level set to shapes and English respectively. We fit the model with 4 chains and 2000 iteration per chain, of which half for warm-up.
 
 ```{r}
 #| label: post-bm
@@ -268,17 +268,23 @@ post_bm <- brm(
 )
 ```
 
+The model converged. $\hat{R}$ values are equal to 1, Bulk and and tail ESS are sufficient.
+
 ```{r}
 #| label: post-summary
 
 summary(post_bm, prob = 0.8)
 ```
 
+Inspection of the posterior predictive check plot suggests good reconstruction of the empirical distribution of the data. 
+
 ```{r}
 #| label: post-pp
 
-pp_check(post_bm, ndraws = 10)
+pp_check(post_bm, ndraws = 15)
 ```
+
+The trace plots of the model coefficients are good.
 
 ```{r}
 #| label: post-trace
@@ -286,6 +292,8 @@ pp_check(post_bm, ndraws = 10)
 mcmc_trace(post_bm, regex_pars = "^b_")
 ```
 
+
+Let's extract the model draws. We also make a longer version for plotting.
 
 ```{r}
 #| label: post-draws
@@ -297,13 +305,37 @@ post_draws_long <- post_draws |>
   pivot_longer(everything(), names_to = "coef")
 ```
 
+@fig-post-coef shows density plots of the posterior draws of the model coefficients:
+
+- `b_Intercept`: log-odds of post-changed responses in English and the shapes condition.
+- `b_conditionsyllables`: difference between the syllables and shapes condition in English.
+- `b_languageKiitharaka`: difference between Kîîtharaka and English in the shapes condition.
+- `b_conditionsyllables:languageKiitharaka`: adjustment to the main effects of language and condition for Kîîtharaka in the syllables condition.
+
 ```{r}
-#| label: post-coef
+#| label: fig-post-coef
+#| fig-cap: "Density of the posterior draws of the model coefficients."
 
 post_draws_long |> 
+  mutate(coef = factor(coef, levels = c("b_Intercept", "b_conditionsyllables", "b_languageKiitharaka", "b_conditionsyllables:languageKiitharaka"))) |> 
   ggplot(aes(value, coef)) +
   stat_halfeye()
 ```
+
+@tbl-fixef reports summary measures (mean, SD, 80% and 70% CrIs) of the posterior draws of the regression coefficients.
+
+```{r}
+#| label: tbl-fixef
+#| tbl-cap: "Summary measures of the posterior draws of regression coefficients from a Bayesian regression model."
+
+fixef(post_bm, probs = c(0.1, 0.9, 0.15, 0.85)) |>
+  round(2) |> 
+  knitr::kable(
+    col.names = c("mean", "SD", "l-80%", "u-80%", "l-70%", "u-70%")
+  )
+```
+
+Let's calculate the posterior draws of expected values and of the linear predictor for further inspection.
 
 ```{r}
 #| label: post-pred
@@ -317,11 +349,20 @@ post_epred <- epred_draws(post_bm, grid)
 post_linpred <- linpred_draws(post_bm, grid)
 ```
 
+@fig-epred shows density plots of the posterior draws of the expected value for the probability of post-changed responses. The densities are split by condition (*x*-axis) and language (red for English and blue for Kîîtharaka).
+
 ```{r}
+#| label: fig-epred
+#| fig-cap: "Densities of the posterior draws of the expected values from the Bayesian regression model."
 post_epred |> 
   ggplot(aes(.epred, condition, fill = language)) +
-  stat_halfeye()
+  stat_halfeye() +
+  labs(
+    x = "Probability of post-changed response"
+  )
 ```
+
+
 
 ```{r}
 post_epred_wide <- post_epred |>
