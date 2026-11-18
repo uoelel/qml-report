@@ -565,7 +565,17 @@ Figure&nbsp;3: Proportion of post-changed responses by language and participant 
 </section>
 <section id="regression-modelling" class="level2" data-number="4">
 <h2 data-number="4" class="anchored" data-anchor-id="regression-modelling"><span class="header-section-number">4</span> Regression modelling</h2>
-<p>We will fit a Bayesian regression model with brms <span class="citation" data-cites="burkner2017">(<a href="#ref-burkner2017" role="doc-biblioref">Bürkner 2017</a>)</span> in R <span class="citation" data-cites="rcoreteam2026">(<a href="#ref-rcoreteam2026" role="doc-biblioref">R Core Team 2026</a>)</span>. The outcome is the pre vs post response (with post set as the second level), modelled with a Bernoulli family. As predictors, we include condition (shapes vs syllables) and language (English vs Kîîtharaka), and an interaction between the two. Both predictors are categorical and coded using the default treatment contrasts with the reference level set to shapes and English respectively. We fit the model with 4 chains and 2000 iteration per chain, of which half for warm-up.</p>
+<p>We will fit a Bayesian regression model with brms <span class="citation" data-cites="burkner2017">(<a href="#ref-burkner2017" role="doc-biblioref">Bürkner 2017</a>)</span> in R <span class="citation" data-cites="rcoreteam2026">(<a href="#ref-rcoreteam2026" role="doc-biblioref">R Core Team 2026</a>)</span>. The outcome is the pre vs post response (with post set as the second level), modelled with a Bernoulli family. As predictors, we include condition (shapes vs syllables) and language (English vs Kîîtharaka), and an interaction between the two. Both predictors are categorical and coded using the default treatment contrasts with the reference level set to shapes and English respectively. We fit the model with 4 chains and 2000 iteration per chain, of which half for warm-up. Here is the model mathematical formula.</p>
+<p><span class="math display">\[
+\begin{aligned}
+post_i &amp; \sim Bernoulli(p)\\
+logit(p) &amp; = \beta_0 + \beta_1 \cdot cond_{syl} + \beta_2 \cdot lang_{K} + \beta_3 \cdot cond_{syl} \cdot lang_{K}
+\end{aligned}
+\]</span></p>
+<ul>
+<li><p><span class="math inline">\(cond_{syl}\)</span> is 0 for shapes and 1 for syllables.</p></li>
+<li><p><span class="math inline">\(lang_K\)</span> is 0 for English and 1 for Kîîtharaka.</p></li>
+</ul>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>post_bm <span class="ot">&lt;-</span> <span class="fu">brm</span>(</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  pre_post <span class="sc">~</span> condition <span class="sc">*</span> language,</span>

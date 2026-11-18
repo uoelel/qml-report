@@ -282,6 +282,18 @@ The outcome is the pre vs post response (with post set as the second level), mod
 As predictors, we include condition (shapes vs syllables) and language (English vs Kîîtharaka), and an interaction between the two.
 Both predictors are categorical and coded using the default treatment contrasts with the reference level set to shapes and English respectively.
 We fit the model with 4 chains and 2000 iteration per chain, of which half for warm-up.
+Here is the model mathematical formula.
+
+$$
+\begin{aligned}
+post_i & \sim Bernoulli(p)\\
+logit(p) & = \beta_0 + \beta_1 \cdot cond_{syl} + \beta_2 \cdot lang_{K} + \beta_3 \cdot cond_{syl} \cdot lang_{K}
+\end{aligned}
+$$
+
+- $cond_{syl}$ is 0 for shapes and 1 for syllables.
+
+- $lang_K$ is 0 for English and 1 for Kîîtharaka.
 
 ```{r}
 #| label: post-bm
