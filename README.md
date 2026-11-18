@@ -1,15 +1,3 @@
-## Instructions
+## Group 7
 
-You have two options: if you are comfortable with git/GitHub, fork this repo.
-Otherwise:
-
--   Click on the "Code" button and select "Download ZIP".
-
--   Unzip the zip archive.
-
--   The folder is a Quarto Project with the assessment template in `submission.qmd`.
-    Use that file to complete the assessment (feel free to create extra files/directories, but note that for the submission you will upload a single PDF created from `report.qmd`, see below).
-
--   You can render `report.qmd` as HTML or PDF using the `Render` button.
-
--   For the submission, **render to PDF and change the name of the file to your exam number.**
+This is the research compendium of the data analysis report assessment of Group 7 (QML 2026).

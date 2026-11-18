@@ -1,22 +1,24 @@
 ---
 title: "QML 2026 Data analysis report"
-author: "7"
+author: "Group 7"
 date: last-modified
 format:
   html: default
   pdf: default
+bibliography: references.bib
 ---
 
-|                     |                                                 |
-|---------------------|-------------------------------------------------|
-| Group Project title | THE PROJECT TITLE                               |
-| Group members       | MEMBER 1, MEMBER 2, MEMBER 3 (use EXAM NUMBERS) |
+|  |  |
+|----------------------|--------------------------------------------------|
+| Group Project title | A Bayesian reanalysis of suffixing preference in English and Kîîtharaka |
+| Group members | MEMBER 1, MEMBER 2, MEMBER 3 (use EXAM NUMBERS) |
 
 ## Background
 
 ```{r}
 #| label: setup
 #| message: false
+#| warning: false
 
 library(tidyverse)
 theme_set(theme_light())
@@ -27,15 +29,25 @@ library(ggdist)
 library(tidybayes)
 ```
 
-This document reports a re-analysis of the data in @martin2020. The original study investigated the hypothesis that humans are biased towards considering sequences that differ at the end as more similar than sequences that differ at the beginning. This hypothesis has been linked to the typological preference for suffixation over prefixation in morphology across the languages of the world. The study assessed the preference for post-changed sequences vs pre-changed sequences in speakers of English (Indo-European, a suffixing language) and of Kîîtharaka (Bantu, a prefixing language).
+This document reports a re-analysis of the data in @martin2020.
+The original study investigated the hypothesis that humans are biased towards considering sequences that differ at the end as more similar than sequences that differ at the beginning.
+This hypothesis has been linked to the typological preference for suffixation over prefixation in morphology across the languages of the world.
+The study assessed the preference for post-changed sequences vs pre-changed sequences in speakers of English (Indo-European, a suffixing language) and of Kîîtharaka (Bantu, a prefixing language).
 
-The study used two types of stimuli: sequences of syllables and sequences of visual shapes. The inclusion of both stimulus types was motivated by the distinction between domain-general perceptual biases and biases arising from language experience. If the tendency to attend more to sequence beginnings reflects a general property of human perception, it should be observed across both linguistic and non-linguistic stimuli. Conversely, if the preference is shaped by experience with the structure of one's native language, it may reflect language-specific learning that can subsequently generalise to other domains. Accordingly, the comparison between syllable and shape stimuli allowed the authors to investigate whether the preference for post-changed sequences extends beyond linguistic material.
+The study used two types of stimuli: sequences of syllables and sequences of visual shapes.
+The inclusion of both stimulus types was motivated by the distinction between domain-general perceptual biases and biases arising from language experience.
+If the tendency to attend more to sequence beginnings reflects a general property of human perception, it should be observed across both linguistic and non-linguistic stimuli.
+Conversely, if the preference is shaped by experience with the structure of one's native language, it may reflect language-specific learning that can subsequently generalise to other domains.
+Accordingly, the comparison between syllable and shape stimuli allowed the authors to investigate whether the preference for post-changed sequences extends beyond linguistic material.
 
-Participants were presented with a target sequence followed by two comparison sequences: a pre-changed sequence, which differed from the target in its initial element, and a post-changed sequence, which differed in its final element. Their task was to indicate which of the two comparison sequences was more similar to the target. This procedure was repeated using both syllable and shape sequences.
+Participants were presented with a target sequence followed by two comparison sequences: a pre-changed sequence, which differed from the target in its initial element, and a post-changed sequence, which differed in its final element.
+Their task was to indicate which of the two comparison sequences was more similar to the target.
+This procedure was repeated using both syllable and shape sequences.
 
 ### Research Questions/Hypotheses
 
-If there is a strong cognitive preference for post-changed sequences, then we should observe such preference independent of linguistic experience (suffixing vs prefixing language) and stimulus type (shape vs syllables). Based on these premises, we will assess the following hypotheses:
+If there is a strong cognitive preference for post-changed sequences, then we should observe such preference independent of linguistic experience (suffixing vs prefixing language) and stimulus type (shape vs syllables).
+Based on these premises, we will assess the following hypotheses:
 
 - H1: English and Kîîtharaka speakers alike prefer post-changed sequences over pre-changed sequences.
 - H2: Condition (shape vs syllables) doesn't elicit a different preference in both languages.
@@ -44,7 +56,8 @@ It should be noted that H2 is briefly mentioned in the original study in the Res
 
 ## Methods
 
-Since we are re-analysing pre-existing data, we focus on the statistical analysis (see Background section for a summary of the procedure and materials of the original study). To address the research hypotheses, we will fit a Bayesian regression model to the response (pre-changed vs post-changed) as a function of language in interaction with condition (shape vs syllables).
+Since we are re-analysing pre-existing data, we focus on the statistical analysis (see Background section for a summary of the procedure and materials of the original study).
+To address the research hypotheses, we will fit a Bayesian regression model to the response (pre-changed vs post-changed) as a function of language in interaction with condition (shape vs syllables).
 
 The critical quantities we will use to address the RHs are:
 
@@ -53,21 +66,23 @@ The critical quantities we will use to address the RHs are:
 
 ### Open Research statement
 
-*Add a link to the online repository containing the Research Compendium of the study. You should also include a description of the structure of the repository/compendium, with the aim of explaining to a potential user of the repository how to re-run the analysis of this report and re-use the data. It is recommended that your repository has a README file with such information and your description below can match the one in the README file (but it's not mandatory that it does).*
+The Research Compendium of this study (including data and code) is available at <https://github.com/uoelel/qml-report>.
+The Compendium is structured thus:
 
-The Research Compendium of this study (including data and code) is available at \<LINK\>.
-The Compendium is structured thus: ...
+- The `data` folder contains the data from @martin2020 in `data_anonymized` and a `cache` folder which contains the cached output of the brms model we fit below.
+
+  - `data_anonymized` has two files with the experimental data, one for English and one for Kîîtharaka.
+    We will read these files and merge them into a single data frame below.
+
+- The analysis file is `submission.qmd`.
+  Running the code in this file will reproduce the analysis (note that the Bayesian model out is cached, so the Bayesian model will not be fit again when running the code).
 
 ## Data
 
-*Remember to include all code and code output in the submission.*
-
 ### Read and process the data
 
-*Read the data here. If the data needs processing, like mutating columns or creating new ones, briefly explain why processing is needed and what you did*.
-*Include a description of each of the relevant columns in the data.*
-
-The original data is split into two different files, one per language, so we bind them into a single tibble. We also select only the critical trials (i.e. the "post-pre" trials).
+The original data is split into two different files, one per language, so we bind them into a single tibble.
+We also select only the critical trials (i.e. the "post-pre" trials).
 
 ```{r}
 #| label: read-data
@@ -82,14 +97,17 @@ suff_pref <- bind_rows(suff_pref_en, suff_pref_ki) |>
 
 ```
 
-@tbl-data shows a preview of the data. Post-changed items were coded as `1` in the accuracy column.
+@tbl-data shows a preview of the data.
+Post-changed items were coded as `1` in the accuracy column.
 
 ```{r}
 #| label: tbl-data
 #| tbl-cap: "Preview of the data"
 
 suff_pref |> 
-  select(subjID, language, condition, target, accuracy)
+  select(subjID, language, condition, target, accuracy) |> 
+  head(10) |> 
+  knitr::kable()
 ```
 
 We check `accuracy` is correctly coded with `0` and `1`.
@@ -127,7 +145,6 @@ suff_pref <- suff_pref |>
 table(suff_pref$condition, suff_pref$language)
 ```
 
-
 ### Descriptive statistics
 
 Let's get the number of participants per language.
@@ -141,7 +158,6 @@ suff_pref |>
 ```
 
 And the number of tirals per language.
-
 
 ```{r}
 #| label: trials
@@ -164,7 +180,8 @@ suff_pref |>
   )
 ```
 
-@tbl-trials-acc-cond shows the number of post-changed responses (out of the total responses for that cell) and the corresponding proportion, for each language and condition. The raw proportion indicate a preference for post-changed responses in English and a preference for pre-changed responses in Kîîtharaka.
+@tbl-trials-acc-cond shows the number of post-changed responses (out of the total responses for that cell) and the corresponding proportion, for each language and condition.
+The raw proportion indicate a preference for post-changed responses in English and a preference for pre-changed responses in Kîîtharaka.
 
 ```{r}
 #| label: tbl-trials-acc-cond
@@ -186,7 +203,9 @@ suff_pref |>
   knitr::kable()
 ```
 
-@fig-acc illustrates the proportion of responses (pre- or post-changed) in the two languages as a stacked bar chart. The *x*-axis indicates the language, while the *y*-axis the proportion of responses. The fill indicate pre- (purple) and post-changed (yellow) responses.
+@fig-acc illustrates the proportion of responses (pre- or post-changed) in the two languages as a stacked bar chart.
+The *x*-axis indicates the language, while the *y*-axis the proportion of responses.
+The fill indicate pre- (purple) and post-changed (yellow) responses.
 
 ```{r}
 #| label: fig-acc
@@ -201,7 +220,8 @@ suff_pref |>
   scale_fill_viridis_d()
 ```
 
-@fig-acc-cond is like @fig-acc but it splits the data by language and condition. The proportions within language are very similar across condition, as suggested by the summary measures above.
+@fig-acc-cond is like @fig-acc but it splits the data by language and condition.
+The proportions within language are very similar across condition, as suggested by the summary measures above.
 
 ```{r}
 #| label: fig-acc-cond
@@ -217,7 +237,8 @@ suff_pref |>
   facet_grid(cols = vars(language))
 ```
 
-@fig-acc-subj is a scatter plot of by-participant proportions of post-changed responses (each grey dot represents one participant), split by language. In colour, the overall proportion of post-changed responses across all participants with 95% bootstrapped CIs.
+@fig-acc-subj is a scatter plot of by-participant proportions of post-changed responses (each grey dot represents one participant), split by language.
+In colour, the overall proportion of post-changed responses across all participants with 95% bootstrapped CIs.
 
 ```{r}
 #| label: fig-acc-subj
@@ -249,11 +270,17 @@ suff_pref |>
   theme(legend.position = "none")
 ```
 
-There is a certain degree of variability between participants in both languages. Most English participants have a proportion of post-changed responses above 50%, although a few fall below 50% with three as low as 0%. In contrast, most Kîîtharaka participants are below 50%, with some above it.
+There is a certain degree of variability between participants in both languages.
+Most English participants have a proportion of post-changed responses above 50%, although a few fall below 50% with three as low as 0%.
+In contrast, most Kîîtharaka participants are below 50%, with some above it.
 
 ## Regression modelling
 
-We will fit a Bayesian regression model with brms [@burkner2017] in R [@rcoreteam2026]. The outcome is the pre vs post response (with post set as the second level), modelled with a Bernoulli family. As predictors, we include condition (shapes vs syllables) and language (English vs Kîîtharaka), and an interaction between the two. Both predictors are categorical and coded using the default treatment contrasts with the reference level set to shapes and English respectively. We fit the model with 4 chains and 2000 iteration per chain, of which half for warm-up.
+We will fit a Bayesian regression model with brms [@burkner2017] in R [@rcoreteam2026].
+The outcome is the pre vs post response (with post set as the second level), modelled with a Bernoulli family.
+As predictors, we include condition (shapes vs syllables) and language (English vs Kîîtharaka), and an interaction between the two.
+Both predictors are categorical and coded using the default treatment contrasts with the reference level set to shapes and English respectively.
+We fit the model with 4 chains and 2000 iteration per chain, of which half for warm-up.
 
 ```{r}
 #| label: post-bm
@@ -268,7 +295,8 @@ post_bm <- brm(
 )
 ```
 
-The model converged. $\hat{R}$ values are equal to 1, Bulk and and tail ESS are sufficient.
+The model converged.
+$\hat{R}$ values are equal to 1, Bulk and and tail ESS are sufficient.
 
 ```{r}
 #| label: post-summary
@@ -276,7 +304,7 @@ The model converged. $\hat{R}$ values are equal to 1, Bulk and and tail ESS are 
 summary(post_bm, prob = 0.8)
 ```
 
-Inspection of the posterior predictive check plot suggests good reconstruction of the empirical distribution of the data. 
+Inspection of the posterior predictive check plot suggests good reconstruction of the empirical distribution of the data.
 
 ```{r}
 #| label: post-pp
@@ -292,8 +320,8 @@ The trace plots of the model coefficients are good.
 mcmc_trace(post_bm, regex_pars = "^b_")
 ```
 
-
-Let's extract the model draws. We also make a longer version for plotting.
+Let's extract the model draws.
+We also make a longer version for plotting.
 
 ```{r}
 #| label: post-draws
@@ -349,7 +377,8 @@ post_epred <- epred_draws(post_bm, grid)
 post_linpred <- linpred_draws(post_bm, grid)
 ```
 
-@fig-epred shows density plots of the posterior draws of the expected value for the probability of post-changed responses. The densities are split by condition (*x*-axis) and language (red for English and blue for Kîîtharaka).
+@fig-epred shows density plots of the posterior draws of the expected value for the probability of post-changed responses.
+The densities are split by condition (*x*-axis) and language (red for English and blue for Kîîtharaka).
 
 ```{r}
 #| label: fig-epred
@@ -364,7 +393,8 @@ post_epred |>
 
 Overall, there is a preference for post-changed responses in English participants and a preference for pre-changed responses in Kîîtharaka participants.
 
-Let's investigate further the difference in probability of post-changed responses in the two conditions, shapes and syllables. We first pivot the expected values tibble so that we can then calculate differences between conditions for each language (these are the columns named `E_syl_sh` and `K_syl_sh`).
+Let's investigate further the difference in probability of post-changed responses in the two conditions, shapes and syllables.
+We first pivot the expected values tibble so that we can then calculate differences between conditions for each language (these are the columns named `E_syl_sh` and `K_syl_sh`).
 
 ```{r}
 #| label: post-epred-wide
@@ -382,7 +412,8 @@ post_epred_wide <- post_epred_wide |>
   )
 ```
 
-@fig-syl-sh plots the posterior draws of the difference in the probability of a post-changed item between the syllables and shapes conditions, in percentage points, for each language. In general the difference spans values between -5 to 5 percentage points.
+@fig-syl-sh plots the posterior draws of the difference in the probability of a post-changed item between the syllables and shapes conditions, in percentage points, for each language.
+In general the difference spans values between -5 to 5 percentage points.
 
 ```{r}
 #| label: fig-syl-sh
@@ -409,9 +440,17 @@ Let's calculate 80% CrIs.
 (quantile2(post_epred_wide$K_syl_sh, probs = c(0.1, 0.9)) * 100) |> round()
 ```
 
-For English, the 80% CrI indicates an 80% probability for the difference to be between -2 and +4 percentage points. In Kîîtharaka, the 80% CrI is [-3, +3]. In both languages, the models suggests a small positive or negative difference or no difference at all. Given the uncertainty, we can't argue for or against this difference being different in the two languages.
+For English, the 80% CrI indicates an 80% probability for the difference to be between -2 and +4 percentage points.
+In Kîîtharaka, the 80% CrI is \[-3, +3\].
+In both languages, the models suggests a small positive or negative difference or no difference at all.
+Given the uncertainty, we can't argue for or against this difference being different in the two languages.
+
+Another useful comparison is between the post-changed preference in English vs the pre-changed preference in Kîîtharaka.
+We do this in the following code (`1 - plogis(K_mean)` gives us the probability of pre-changed items).
 
 ```{r}
+#| label: post-linpred-wide
+
 post_linpred_wide <- post_linpred |>
   unite("lang_cond", language, condition) |> 
   ungroup() |> 
@@ -422,24 +461,42 @@ post_linpred_wide <- post_linpred |>
     K_mean = (Kiitharaka_shapes + Kiitharaka_syllables) / 2,
     E_p = plogis(E_mean),
     K_p = 1 - plogis(K_mean),
+    # the quantity of interest
     E_K_p = E_p - K_p
   )
 ```
 
-```{r}
-post_linpred_wide |> 
-  ggplot(aes(E_K_p * 100)) +
-  stat_halfeye()
-```
+Positive valuse of `E_K_p` would indicate a stronger post-change preference in English than pre-change preference in Kîîtharaka.
+Negative values of `E_K_p` would indicate a stronger pre-change preference in Kîîtharaka than post-change preference in English.
+@fig-ekp shows the density of the posterior draws of the difference between the probability of post-change items in English and the probability of pre-change items in Kîîtharaka, in percentage points
 
 ```{r}
+#| label: fig-ekp
+#| fig-cap: "Difference between the probability of post-change items in English and the probability of pre-change items in Kîîtharaka, in percentage points."
+
+post_linpred_wide |> 
+  ggplot(aes(E_K_p * 100)) +
+  stat_halfeye() +
+  labs(
+    x = "Difference in probability (English post-change - Kîîtharaka pre-change, perc. points)"
+  )
+```
+
+The distribution covers positive values, thus indicating that the post-change preference in English is stronger than the pre-change preference in Kîîtharaka.
+We get the 80% CrIs to quantify how stronger.
+
+```{r}
+#| label: ekp-cri
+
 quantile2(post_linpred_wide$E_K_p * 100, probs = c(0.1, 0.9)) |> round()
 ```
 
+The 80% CrI is \[12, 16\] percentage points.
+In other words, the English post-change probability in English is about 12-16 percentage points higher than the pre-change probability in Kîîtharaka.
+If we interpret the pre/post-change probability as preference, then the model suggests a stronger preference for one of the two change locations in English than in Kîîtharaka.
 
 ## Discussion
 
 *Write a brief discussion of the your model results in light of the research question.*
 
 ## References
-
