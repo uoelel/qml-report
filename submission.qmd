@@ -10,7 +10,7 @@ bibliography: references.bib
 
 |  |  |
 |----------------------|--------------------------------------------------|
-| Group Project title | A Bayesian reanalysis of suffixing preference in English and Kîîtharaka |
+| Group Project title | A Bayesian re-analysis of suffixing preference in English and Kîîtharaka |
 | Group members | MEMBER 1, MEMBER 2, MEMBER 3 (use EXAM NUMBERS) |
 
 ## Background
@@ -86,6 +86,7 @@ We also select only the critical trials (i.e. the "post-pre" trials).
 
 ```{r}
 #| label: read-data
+#| message: false
 
 suff_pref_en <- read_csv("data/data_anonymized/English_anon.csv") |>
   mutate(language = "English")
@@ -363,7 +364,7 @@ fixef(post_bm, probs = c(0.1, 0.9, 0.15, 0.85)) |>
   )
 ```
 
-Let's calculate the posterior draws of expected values and of the linear predictor for further inspection.
+Let's calculate the posterior draws of expected values for further inspection.
 
 ```{r}
 #| label: post-pred
@@ -374,7 +375,7 @@ grid <- expand_grid(
 )
 
 post_epred <- epred_draws(post_bm, grid)
-post_linpred <- linpred_draws(post_bm, grid)
+
 ```
 
 @fig-epred shows density plots of the posterior draws of the expected value for the probability of post-changed responses.
@@ -392,8 +393,46 @@ post_epred |>
 ```
 
 Overall, there is a preference for post-changed responses in English participants and a preference for pre-changed responses in Kîîtharaka participants.
+To more directly address H1, which is about comparing the two languages, independent of condition, we need to average across conditions.
+Averaging should be done at the level of the linear predictor, rather than with expected values, so we get the linear predictor in the following code.
 
-Let's investigate further the difference in probability of post-changed responses in the two conditions, shapes and syllables.
+```{r}
+#| label: lin-pred
+
+post_linpred <- linpred_draws(post_bm, grid)
+
+```
+
+Let's pivot the resulting tibble to average across conditions and get the expected probability of post-changed items in the two languages and the probability of pre-changed items in Kîîtharaka.
+
+```{r}
+#| label: lin-pred-wide
+
+post_linpred_wide <- post_linpred |>
+  unite("lang_cond", language, condition) |> 
+  ungroup() |> 
+  select(-.row) |> 
+  pivot_wider(names_from = lang_cond, values_from = .linpred) |> 
+  mutate(
+    E_mean = (English_shapes + English_syllables) / 2,
+    K_mean = (Kiitharaka_shapes + Kiitharaka_syllables) / 2,
+    E_post_p = plogis(E_mean),
+    K_post_p = plogis(K_mean),
+    K_pre_p = 1 - K_post_p
+  )
+```
+
+We can now get the 80% CrIs.
+
+```{r}
+#| label: post-p-cris
+
+quantile2(post_linpred_wide$E_post_p, probs = c(0.1, 0.9)) |> round(2)
+quantile2(post_linpred_wide$K_post_p, probs = c(0.1, 0.9)) |> round(2)
+quantile2(post_linpred_wide$K_pre_p, probs = c(0.1, 0.9)) |> round(2)
+```
+
+Let's investigate further the difference in probability of post-changed responses in the two conditions, shapes and syllables (H2).
 We first pivot the expected values tibble so that we can then calculate differences between conditions for each language (these are the columns named `E_syl_sh` and `K_syl_sh`).
 
 ```{r}
@@ -446,27 +485,18 @@ In both languages, the models suggests a small positive or negative difference o
 Given the uncertainty, we can't argue for or against this difference being different in the two languages.
 
 Another useful comparison is between the post-changed preference in English vs the pre-changed preference in Kîîtharaka.
-We do this in the following code (`1 - plogis(K_mean)` gives us the probability of pre-changed items).
+We do this in the following code.
 
 ```{r}
-#| label: post-linpred-wide
+#| label: ekp
 
-post_linpred_wide <- post_linpred |>
-  unite("lang_cond", language, condition) |> 
-  ungroup() |> 
-  select(-.row) |> 
-  pivot_wider(names_from = lang_cond, values_from = .linpred) |> 
+post_linpred_wide <- post_linpred_wide |>
   mutate(
-    E_mean = (English_shapes + English_syllables) / 2,
-    K_mean = (Kiitharaka_shapes + Kiitharaka_syllables) / 2,
-    E_p = plogis(E_mean),
-    K_p = 1 - plogis(K_mean),
-    # the quantity of interest
-    E_K_p = E_p - K_p
+    E_K_p = E_post_p - K_pre_p
   )
 ```
 
-Positive valuse of `E_K_p` would indicate a stronger post-change preference in English than pre-change preference in Kîîtharaka.
+Positive values of `E_K_p` would indicate a stronger post-change preference in English than pre-change preference in Kîîtharaka.
 Negative values of `E_K_p` would indicate a stronger pre-change preference in Kîîtharaka than post-change preference in English.
 @fig-ekp shows the density of the posterior draws of the difference between the probability of post-change items in English and the probability of pre-change items in Kîîtharaka, in percentage points
 
@@ -503,7 +533,7 @@ Research hypotheses (repeated from above):
 - H2: Condition (shape vs syllables) doesn't elicit a different preference in both languages.
 
 The results of our re-analysis are generally in line with the conclusions drawn by the authors of the original study [@martin2020].
-The results regarding H1 are quite clear, and match the original paper: English participants showed a preference for post-changed items while Kîîtharaka participants showed a preference of pre-changed items.
+The results regarding H1 are quite clear, and match the original paper: English participants showed a preference for post-changed items (80% CrI of post-changed probability \[0.75, 0.78\]) while Kîîtharaka participants showed a preference of pre-changed items (80% CrI of pre-changed probability \[0.61, 0.64\]).
 However there are some differences.
 As far as H2 is concerned, the original authors conclude that condition (shapes vs syllables) elicits similar preferences in both languages, however our reported CrIs span a range from -3 to +4 percentage points (\[-2, +4\] in English, \[-3, +3\] in Kîîtharaka).
 We agree that even a 4 point difference is small, but whether it is irrelevant to the questions at hand we can't confidently say.
