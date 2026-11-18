@@ -157,7 +157,7 @@ suff_pref |>
   count(language)
 ```
 
-And the number of tirals per language.
+And the number of trials per language.
 
 ```{r}
 #| label: trials
@@ -497,6 +497,20 @@ If we interpret the pre/post-change probability as preference, then the model su
 
 ## Discussion
 
-*Write a brief discussion of the your model results in light of the research question.*
+Research hypotheses (repeated from above):
+
+- H1: English and Kîîtharaka speakers alike prefer post-changed sequences over pre-changed sequences.
+- H2: Condition (shape vs syllables) doesn't elicit a different preference in both languages.
+
+The results of our re-analysis are generally in line with the conclusions drawn by the authors of the original study [@martin2020].
+The results regarding H1 are quite clear, and match the original paper: English participants showed a preference for post-changed items while Kîîtharaka participants showed a preference of pre-changed items.
+However there are some differences.
+As far as H2 is concerned, the original authors conclude that condition (shapes vs syllables) elicits similar preferences in both languages, however our reported CrIs span a range from -3 to +4 percentage points (\[-2, +4\] in English, \[-3, +3\] in Kîîtharaka).
+We agree that even a 4 point difference is small, but whether it is irrelevant to the questions at hand we can't confidently say.
+Moreover, given that the CrIs span negative and positive values, we refrain for arguing for or against an effect of condition and a difference in effect between the two languages.
+
+Moreover, we compared the post-change preference in English with the pre-change preference in Kîîtharaka and we found that the 80% CrI of the difference between the two is \[12, 16\] percentage points.
+In other words, while indeed the two languages show opposite preferences in line with their affixation nature (English being a suffixing language and Kîîtharaka being a prefixing language), the preference is appreciably stronger in English than in Kîîtharaka.
+This difference should be addressed in the future.
 
 ## References
