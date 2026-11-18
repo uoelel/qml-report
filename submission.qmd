@@ -168,7 +168,7 @@ suff_pref |>
 
 ```{r}
 #| label: tbl-trials-acc-cond
-#| tbl-cap: "Number of post-change responses out of cell total and proportion (between parentheses) by language and condition."
+#| tbl-cap: "Number of post-changed responses out of cell total and proportion (between parentheses) by language and condition."
 
 suff_pref |> 
   count(language, condition, pre_post) |> 
@@ -362,15 +362,54 @@ post_epred |>
   )
 ```
 
+Overall, there is a preference for post-changed responses in English participants and a preference for pre-changed responses in Kîîtharaka participants.
 
+Let's investigate further the difference in probability of post-changed responses in the two conditions, shapes and syllables. We first pivot the expected values tibble so that we can then calculate differences between conditions for each language (these are the columns named `E_syl_sh` and `K_syl_sh`).
 
 ```{r}
+#| label: post-epred-wide
+
 post_epred_wide <- post_epred |>
   unite("lang_cond", language, condition) |> 
   ungroup() |> 
   select(-.row) |> 
   pivot_wider(names_from = lang_cond, values_from = .epred)
+
+post_epred_wide <- post_epred_wide |> 
+  mutate(
+    E_syl_sh = English_syllables - English_shapes,
+    K_syl_sh = Kiitharaka_syllables - Kiitharaka_shapes
+  )
 ```
+
+@fig-syl-sh plots the posterior draws of the difference in the probability of a post-changed item between the syllables and shapes conditions, in percentage points, for each language. In general the difference spans values between -5 to 5 percentage points.
+
+```{r}
+#| label: fig-syl-sh
+#| fig-cap: "Difference in the probability of a post-changed item between the syllables and shapes conditions, in percentage points, by language."
+
+post_epred_wide |> 
+  select("English" = E_syl_sh, "Kiitharaka" = K_syl_sh) |> 
+  pivot_longer(everything()) |> 
+  ggplot(aes(value * 100, name, fill = name)) +
+  stat_halfeye() +
+  labs(
+    x = "Difference in probability of a post-change item (syllables - shapes, percentage points)",
+    y = NULL
+  ) +
+  theme(legend.position = "none")
+```
+
+Let's calculate 80% CrIs.
+
+```{r}
+#| label: post-epred-diff
+
+(quantile2(post_epred_wide$E_syl_sh, probs = c(0.1, 0.9)) * 100) |> round()
+(quantile2(post_epred_wide$K_syl_sh, probs = c(0.1, 0.9)) * 100) |> round()
+```
+
+For English, the 80% CrI indicates an 80% probability for the difference to be between -2 and +4 percentage points. In Kîîtharaka, the 80% CrI is [-3, +3]. In both languages, the models suggests a small positive or negative difference or no difference at all. Given the uncertainty, we can't argue for or against this difference being different in the two languages.
 
 ```{r}
 post_linpred_wide <- post_linpred |>
